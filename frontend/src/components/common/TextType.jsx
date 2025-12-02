@@ -11,7 +11,8 @@ const TextType = ({
   cursorCharacter = '|',
   hideCursorWhileTyping = false,
   className = '',
-  cursorClassName = ''
+  cursorClassName = '',
+  style = {}
 }) => {
   const [displayText, setDisplayText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -71,12 +72,15 @@ const TextType = ({
   const shouldShowCursor = showCursor && (!hideCursorWhileTyping || isDeleting || isPaused);
 
   return (
-    <Component className={className}>
+    <Component className={className} style={style}>
       {displayText}
       {shouldShowCursor && (
         <span 
           className={cursorClassName}
-          style={{ opacity: showCursorState ? 1 : 0 }}
+          style={{ 
+            opacity: showCursorState ? 1 : 0,
+            ...style
+          }}
         >
           {cursorCharacter}
         </span>

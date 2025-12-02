@@ -2,12 +2,38 @@ import Squares from './components/common/Squares';
 import CampusTitle from './components/common/CampusTitle';
 import './App.css';
 
-// Lucide React icons (we'll use emojis as placeholders since we don't have lucide-react installed)
-const GraduationCap = () => <span className="text-4xl">🎓</span>;
-const Briefcase = () => <span className="text-4xl">💼</span>;
-const Shield = () => <span className="text-4xl">🛡️</span>;
-const Users = () => <span className="text-4xl">👥</span>;
-const ArrowRight = ({ className }) => <span className={className}>→</span>;
+// Icon components - larger and more prominent
+const GraduationCap = () => (
+  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14z" />
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 14l9-5-9-5-9 5 9 5zm0 0l6.16-3.422a12.083 12.083 0 01.665 6.479A11.952 11.952 0 0012 20.055a11.952 11.952 0 00-6.824-2.998 12.078 12.078 0 01.665-6.479L12 14zm-4 6v-7.5l4-2.222" />
+  </svg>
+);
+
+const Briefcase = () => (
+  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 13.255A23.931 23.931 0 0112 15c-3.183 0-6.22-.62-9-1.745M16 6V4a2 2 0 00-2-2h-4a2 2 0 00-2 2v2m4 6h.01M5 20h14a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+  </svg>
+);
+
+const Shield = () => (
+  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+  </svg>
+);
+
+const Users = () => (
+  <svg className="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+  </svg>
+);
+
+const ArrowRight = () => (
+  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+  </svg>
+);
 
 export default function Landing() {
   return (
@@ -25,7 +51,7 @@ export default function Landing() {
       
       {/* Content wrapper with higher z-index */}
       <div className="relative" style={{ zIndex: 1 }}>
-        {/* Hero Section - Only Title and Motto */}
+        {/* Hero Section */}
         <section className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20 md:py-32 relative">
           <div className="text-center relative z-10">
             <CampusTitle />
@@ -37,22 +63,23 @@ export default function Landing() {
             <div className="mt-16">
               <h2 className="text-2xl font-semibold text-white mb-8">Choose Your Role</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
+                
                 {/* Student Card */}
                 <a 
                   href="/login?role=student" 
-                  className="group relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-blue-500 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-blue-500/20"
+                  className="card-link group"
                 >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-blue-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-blue-500/20 transition-colors">
+                  <div className="card-content">
+                    <div className="icon-wrapper icon-blue">
                       <GraduationCap />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Student</h3>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <h3 className="card-title">Student</h3>
+                    <p className="card-description">
                       Discover jobs, apply, and track your placement journey
                     </p>
-                    <div className="flex items-center text-blue-400 text-sm font-medium group-hover:gap-2 transition-all">
-                      Get Started
-                      <ArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" />
+                    <div className="card-action text-blue-400">
+                      <span>Get Started</span>
+                      <ArrowRight />
                     </div>
                   </div>
                 </a>
@@ -60,19 +87,19 @@ export default function Landing() {
                 {/* Recruiter Card */}
                 <a 
                   href="/login?role=recruiter" 
-                  className="group relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-green-500 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-green-500/20"
+                  className="card-link group card-green"
                 >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-green-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-green-500/20 transition-colors">
+                  <div className="card-content">
+                    <div className="icon-wrapper icon-green">
                       <Briefcase />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">Recruiter</h3>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <h3 className="card-title">Recruiter</h3>
+                    <p className="card-description">
                       Post jobs, review applications, and hire top talent
                     </p>
-                    <div className="flex items-center text-green-400 text-sm font-medium group-hover:gap-2 transition-all">
-                      Get Started
-                      <ArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" />
+                    <div className="card-action text-green-400">
+                      <span>Get Started</span>
+                      <ArrowRight />
                     </div>
                   </div>
                 </a>
@@ -80,19 +107,19 @@ export default function Landing() {
                 {/* TPO Admin Card */}
                 <a 
                   href="/login?role=tpo-admin" 
-                  className="group relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-purple-500 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-purple-500/20"
+                  className="card-link group card-purple"
                 >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-purple-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-purple-500/20 transition-colors">
+                  <div className="card-content">
+                    <div className="icon-wrapper icon-purple">
                       <Shield />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">TPO Admin</h3>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <h3 className="card-title">TPO Admin</h3>
+                    <p className="card-description">
                       Manage placements, approve jobs, and oversee operations
                     </p>
-                    <div className="flex items-center text-purple-400 text-sm font-medium group-hover:gap-2 transition-all">
-                      Get Started
-                      <ArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" />
+                    <div className="card-action text-purple-400">
+                      <span>Get Started</span>
+                      <ArrowRight />
                     </div>
                   </div>
                 </a>
@@ -100,28 +127,29 @@ export default function Landing() {
                 {/* TPO Dept Card */}
                 <a 
                   href="/login?role=tpo-dept" 
-                  className="group relative bg-slate-800/50 backdrop-blur-sm border border-slate-700 rounded-xl p-6 hover:border-orange-500 hover:bg-slate-800/70 transition-all duration-300 hover:scale-105 hover:shadow-xl hover:shadow-orange-500/20"
+                  className="card-link group card-orange"
                 >
-                  <div className="flex flex-col items-center text-center">
-                    <div className="w-16 h-16 bg-orange-500/10 rounded-full flex items-center justify-center mb-4 group-hover:bg-orange-500/20 transition-colors">
+                  <div className="card-content">
+                    <div className="icon-wrapper icon-orange">
                       <Users />
                     </div>
-                    <h3 className="text-xl font-bold text-white mb-2">TPO Dept</h3>
-                    <p className="text-sm text-slate-400 mb-4">
+                    <h3 className="card-title">TPO Dept</h3>
+                    <p className="card-description">
                       Verify profiles, review applications, and support students
                     </p>
-                    <div className="flex items-center text-orange-400 text-sm font-medium group-hover:gap-2 transition-all">
-                      Get Started
-                      <ArrowRight className="ml-1 group-hover:translate-x-1 transition-transform" />
+                    <div className="card-action text-orange-400">
+                      <span>Get Started</span>
+                      <ArrowRight />
                     </div>
                   </div>
                 </a>
+
               </div>
 
               {/* Register Link */}
               <div className="mt-8 text-slate-400">
                 Don't have an account? 
-                <a href="/register" className="text-blue-400 hover:text-blue-300 ml-2 font-medium">
+                <a href="/register" className="text-blue-400 hover:text-blue-300 ml-2 font-medium transition-colors">
                   Register here
                 </a>
               </div>
