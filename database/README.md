@@ -35,7 +35,7 @@ database/
 ### 1. Set Environment Variable
 
 ```bash
-export DATABASE_URL="postgresql://neondb_owner:npg_V4AeyDqLG6Kv@ep-hidden-glade-a4ob20yk-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+export DATABASE_URL="postgresql://username:password@host-pooler.region.aws.neon.tech/database?sslmode=require"
 ```
 
 Or add it to your `.env` file in the backend directory.
@@ -284,11 +284,11 @@ npx prisma generate # Generate Prisma Client
 Required environment variables:
 
 ```bash
-# Database connection
-DATABASE_URL="postgresql://neondb_owner:npg_V4AeyDqLG6Kv@ep-hidden-glade-a4ob20yk-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+# Database connection (use your actual credentials from .env file)
+DATABASE_URL="postgresql://username:password@host-pooler.region.aws.neon.tech/database?sslmode=require"
 
 # Optional: Direct connection (non-pooled)
-DIRECT_URL="postgresql://neondb_owner:npg_V4AeyDqLG6Kv@ep-hidden-glade-a4ob20yk.us-east-1.aws.neon.tech/neondb?sslmode=require"
+DIRECT_URL="postgresql://username:password@host.region.aws.neon.tech/database?sslmode=require"
 ```
 
 ## 🚨 Important Notes

@@ -5,14 +5,15 @@ Quick commands for common database operations with NeonDB.
 ## 🔗 Connection
 
 ```bash
-# Set environment variable
-export DATABASE_URL="postgresql://neondb_owner:npg_V4AeyDqLG6Kv@ep-hidden-glade-a4ob20yk-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require"
+# Set environment variable (use your actual credentials)
+export DATABASE_URL="postgresql://username:password@host-pooler.region.aws.neon.tech/database?sslmode=require"
 
 # Connect to database
 psql "$DATABASE_URL"
 
-# Or use the full connection string
-psql 'postgresql://neondb_owner:npg_V4AeyDqLG6Kv@ep-hidden-glade-a4ob20yk-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require'
+# Or load from .env file
+source ../backend/.env
+psql "$DATABASE_URL"
 ```
 
 ## 🚀 Setup

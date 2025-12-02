@@ -75,13 +75,15 @@
 
 **Connection String:**
 ```
-postgresql://neondb_owner:npg_T8ap5tWSiCcm@ep-shy-credit-ade8wr68-pooler.c-2.us-east-1.aws.neon.tech/tpo?sslmode=require&channel_binding=require
+postgresql://username:password@host-pooler.region.aws.neon.tech/database?sslmode=require
 ```
 
 **Environment Variable:**
 ```bash
-DATABASE_URL=postgresql://neondb_owner:npg_T8ap5tWSiCcm@ep-shy-credit-ade8wr68-pooler.c-2.us-east-1.aws.neon.tech/tpo?sslmode=require&channel_binding=require
+DATABASE_URL=postgresql://username:password@host-pooler.region.aws.neon.tech/database?sslmode=require
 ```
+
+**Note:** Use your actual credentials from the `.env` file or backend configuration.
 
 ---
 
@@ -89,7 +91,7 @@ DATABASE_URL=postgresql://neondb_owner:npg_T8ap5tWSiCcm@ep-shy-credit-ade8wr68-p
 
 ### Connect to Database
 ```bash
-psql 'postgresql://neondb_owner:npg_T8ap5tWSiCcm@ep-shy-credit-ade8wr68-pooler.c-2.us-east-1.aws.neon.tech/tpo?sslmode=require&channel_binding=require'
+psql "$DATABASE_URL"
 ```
 
 ### Apply All Schemas

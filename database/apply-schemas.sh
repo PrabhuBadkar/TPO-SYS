@@ -16,8 +16,15 @@ YELLOW='\033[1;33m'
 BLUE='\033[0;34m'
 NC='\033[0m' # No Color
 
-# Database connection URL
-DATABASE_URL="${DATABASE_URL:-postgresql://neondb_owner:npg_V4AeyDqLG6Kv@ep-hidden-glade-a4ob20yk-pooler.us-east-1.aws.neon.tech/neondb?sslmode=require}"
+# Database connection URL - must be set via environment variable
+if [ -z "$DATABASE_URL" ]; then
+    echo -e "${RED}❌ Error: DATABASE_URL environment variable is not set${NC}"
+    echo -e "${YELLOW}Please set DATABASE_URL:${NC}"
+    echo -e "  export DATABASE_URL='postgresql://username:password@host/database?sslmode=require'"
+    echo -e "${YELLOW}Or load from .env file:${NC}"
+    echo -e "  source ../backend/.env"
+    exit 1
+fi
 
 echo -e "${BLUE}╔═══════════════════════════════════════════════════════╗${NC}"
 echo -e "${BLUE}║                                                       ║${NC}"
