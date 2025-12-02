@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import Squares from './components/common/Squares';
 import CampusTitle from './components/common/CampusTitle';
 import './App.css';
@@ -64,9 +65,9 @@ export default function Landing() {
               <h2 className="text-2xl font-semibold text-white mb-8">Choose Your Role</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 max-w-6xl mx-auto">
                 
-                {/* Student Card */}
-                <a 
-                  href="/login?role=student" 
+                {/* Student Card - Goes to Login */}
+                <Link 
+                  to="/login" 
                   className="card-link group"
                 >
                   <div className="card-content">
@@ -82,11 +83,11 @@ export default function Landing() {
                       <ArrowRight />
                     </div>
                   </div>
-                </a>
+                </Link>
 
                 {/* Recruiter Card */}
-                <a 
-                  href="/login?role=recruiter" 
+                <Link 
+                  to="/login?role=recruiter" 
                   className="card-link group card-green"
                 >
                   <div className="card-content">
@@ -102,11 +103,11 @@ export default function Landing() {
                       <ArrowRight />
                     </div>
                   </div>
-                </a>
+                </Link>
 
                 {/* TPO Admin Card */}
-                <a 
-                  href="/login?role=tpo-admin" 
+                <Link 
+                  to="/login?role=tpo-admin" 
                   className="card-link group card-purple"
                 >
                   <div className="card-content">
@@ -122,11 +123,11 @@ export default function Landing() {
                       <ArrowRight />
                     </div>
                   </div>
-                </a>
+                </Link>
 
                 {/* TPO Dept Card */}
-                <a 
-                  href="/login?role=tpo-dept" 
+                <Link 
+                  to="/login?role=tpo-dept" 
                   className="card-link group card-orange"
                 >
                   <div className="card-content">
@@ -142,16 +143,16 @@ export default function Landing() {
                       <ArrowRight />
                     </div>
                   </div>
-                </a>
+                </Link>
 
               </div>
 
-              {/* Register Link */}
+              {/* Register Link - Goes to Register */}
               <div className="mt-8 text-slate-400">
                 Don't have an account? 
-                <a href="/register" className="text-blue-400 hover:text-blue-300 ml-2 font-medium transition-colors">
+                <Link to="/register" className="text-blue-400 hover:text-blue-300 ml-2 font-medium transition-colors">
                   Register here
-                </a>
+                </Link>
               </div>
             </div>
           </div>
