@@ -1,0 +1,253 @@
+import { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import Silk from '../../components/common/Silk';
+import Toast from '../../components/common/Toast';
+import './TPOAdminAuth.css';
+
+export default function TPOAdminLogin() {
+  const navigate = useNavigate();
+  const [formData, setFormData] = useState({
+    email: '',
+    password: ''
+  });
+  const [errors, setErrors] = useState({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [toast, setToast] = useState(null);
+
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+  };
+
+  const closeToast = () => {
+    setToast(null);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({
+      ...prev,
+      [name]: value
+    }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: ''
+      }));
+    }
+  };
+
+  const validateForm = () => {
+    const newErrors = {};
+
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email is required';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Please enter a valid email';
+    }
+
+    if (!formData.password) {
+      newErrors.password = 'Password is required';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      const response = await fetch('http://localhost:5000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Check if user is TPO Admin
+        if (data.data.user.role !== 'ROLE_TPO_ADMIN') {
+          showToast('Access denied. This portal is for TPO Admins only.', 'error');
+          setIsLoading(false);
+          return;
+        }
+
+        // Login successful
+        localStorage.setItem('accessToken', data.data.tokens.accessToken);
+        localStorage.setItem('refreshToken', data.data.tokens.refreshToken);
+        localStorage.setItem('user', JSON.stringify(data.data.user));
+
+        // Show beautiful welcome toast
+        showToast(`Welcome, Admin!`, 'success');
+        
+        // Navigate after toast shows
+        setTimeout(() => {
+          navigate('/tpo-admin/dashboard');
+        }, 2000);
+      } else {
+        // Login failed
+        showToast(data.message || 'Login failed. Please check your credentials.', 'error');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      showToast('Network error. Please check if the backend is running.', 'error');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="tpo-admin-auth-page">
+      {/* Toast Notification */}
+      {toast && (
+        <Toast
+          message={toast.message}
+          type={toast.type}
+          onClose={closeToast}
+          duration={4000}
+        />
+      )}
+
+      {/* Silk Background */}
+      <div className="silk-background">
+        <Silk
+          speed={5}
+          scale={1}
+          color="#7B3FF2"
+          noiseIntensity={1.5}
+          rotation={0}
+        />
+      </div>
+      
+      {/* Content */}
+      <div className="tpo-admin-auth-content">
+        <div className="tpo-admin-auth-container">
+          {/* Back to Home Link */}
+          <Link to="/" className="tpo-admin-back-link">
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            </svg>
+            <span>Back to Home</span>
+          </Link>
+
+          {/* Header */}
+          <div className="tpo-admin-auth-header">
+            {/* Admin Badge */}
+            <div className="admin-badge">
+              <svg className="admin-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+              </svg>
+            </div>
+
+            <h1 className="tpo-admin-auth-title">TPO Admin Portal</h1>
+            <p className="tpo-admin-auth-subtitle">Secure administrative access</p>
+          </div>
+
+          {/* Form */}
+          <form onSubmit={handleSubmit} className="tpo-admin-auth-form">
+            {/* Email Field */}
+            <div className="tpo-admin-form-group">
+              <label htmlFor="email" className="tpo-admin-form-label">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                </svg>
+                Email Address
+              </label>
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                className={`tpo-admin-form-input ${errors.email ? 'error' : ''}`}
+                placeholder="Enter your admin email"
+              />
+              {errors.email && <span className="tpo-admin-error-message">{errors.email}</span>}
+            </div>
+
+            {/* Password Field */}
+            <div className="tpo-admin-form-group">
+              <label htmlFor="password" className="tpo-admin-form-label">
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                </svg>
+                Password
+              </label>
+              <div className="tpo-admin-password-wrapper">
+                <input
+                  type={showPassword ? 'text' : 'password'}
+                  id="password"
+                  name="password"
+                  value={formData.password}
+                  onChange={handleChange}
+                  className={`tpo-admin-form-input ${errors.password ? 'error' : ''}`}
+                  placeholder="Enter your password"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="tpo-admin-password-toggle"
+                >
+                  {showPassword ? (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                    </svg>
+                  ) : (
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              {errors.password && <span className="tpo-admin-error-message">{errors.password}</span>}
+            </div>
+
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={isLoading}
+              className="tpo-admin-submit-button"
+            >
+              {isLoading ? (
+                <>
+                  <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                  </svg>
+                  <span>Authenticating...</span>
+                </>
+              ) : (
+                <>
+                  <span>Access Dashboard</span>
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                </>
+              )}
+            </button>
+
+            {/* Footer */}
+            <div className="tpo-admin-auth-footer">
+              <p>Need assistance? Contact IT Support</p>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}

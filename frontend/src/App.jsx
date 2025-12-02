@@ -124,7 +124,7 @@ export default function Landing() {
 
                 {/* TPO Admin Card */}
                 <Link 
-                  to="/login?role=tpo-admin" 
+                  to="/tpo-admin/login" 
                   className="card-link group card-purple"
                 >
                   <div className="card-content">
