@@ -28,6 +28,10 @@ const DotGrid = ({
   baseColor = '#5227FF',
   activeColor = '#5227FF',
   proximity = 150,
+  repelStrength = 30,
+  returnSpeed = 0.15,
+  clickRippleRadius = 200,
+  clickRippleStrength = 50,
   className = '',
   style
 }) => {
@@ -35,10 +39,10 @@ const DotGrid = ({
   const canvasRef = useRef(null);
   const dotsRef = useRef([]);
   const pointerRef = useRef({
-    x: 0,
-    y: 0,
-    lastX: 0,
-    lastY: 0
+    x: -1000,
+    y: -1000,
+    lastX: -1000,
+    lastY: -1000
   });
 
   const baseRgb = useMemo(() => hexToRgb(baseColor), [baseColor]);
@@ -84,19 +88,29 @@ const DotGrid = ({
       for (let x = 0; x < cols; x++) {
         const cx = startX + x * cell;
         const cy = startY + y * cell;
-        dots.push({ cx, cy, xOffset: 0, yOffset: 0 });
+        dots.push({ 
+          cx, 
+          cy, 
+          xOffset: 0, 
+          yOffset: 0,
+          vx: 0,
+          vy: 0,
+          targetX: 0,
+          targetY: 0
+        });
       }
     }
     dotsRef.current = dots;
   }, [dotSize, gap]);
 
+  // Animation loop with physics
   useEffect(() => {
     if (!circlePath) return;
 
     let rafId;
     const proxSq = proximity * proximity;
 
-    const draw = () => {
+    const animate = () => {
       const canvas = canvasRef.current;
       if (!canvas) return;
       const ctx = canvas.getContext('2d');
@@ -106,36 +120,66 @@ const DotGrid = ({
       const { x: px, y: py } = pointerRef.current;
 
       for (const dot of dotsRef.current) {
-        const ox = dot.cx + dot.xOffset;
-        const oy = dot.cy + dot.yOffset;
+        // Calculate distance to pointer
         const dx = dot.cx - px;
         const dy = dot.cy - py;
-        const dsq = dx * dx + dy * dy;
+        const distSq = dx * dx + dy * dy;
+        const dist = Math.sqrt(distSq);
 
-        let style = baseColor;
-        if (dsq <= proxSq) {
-          const dist = Math.sqrt(dsq);
-          const t = 1 - dist / proximity;
-          const r = Math.round(baseRgb.r + (activeRgb.r - baseRgb.r) * t);
-          const g = Math.round(baseRgb.g + (activeRgb.g) - baseRgb.g) * t);
-          const b = Math.round(baseRgb.b + (activeRgb.b - baseRgb.b) * t);
-          style = `rgb(${r},${g},${b})`;
+        // Repel from pointer
+        if (dist < proximity && dist > 0) {
+          const force = (1 - dist / proximity) * repelStrength;
+          const angle = Math.atan2(dy, dx);
+          dot.targetX = Math.cos(angle) * force;
+          dot.targetY = Math.sin(angle) * force;
+        } else {
+          // Return to origin
+          dot.targetX = 0;
+          dot.targetY = 0;
         }
 
+        // Smooth physics interpolation
+        dot.vx += (dot.targetX - dot.xOffset) * returnSpeed;
+        dot.vy += (dot.targetY - dot.yOffset) * returnSpeed;
+        
+        // Apply friction
+        dot.vx *= 0.85;
+        dot.vy *= 0.85;
+        
+        // Update position
+        dot.xOffset += dot.vx;
+        dot.yOffset += dot.vy;
+
+        // Calculate final position
+        const ox = dot.cx + dot.xOffset;
+        const oy = dot.cy + dot.yOffset;
+
+        // Color interpolation based on distance
+        let fillStyle = baseColor;
+        if (distSq <= proxSq) {
+          const t = 1 - dist / proximity;
+          const r = Math.round(baseRgb.r + (activeRgb.r - baseRgb.r) * t);
+          const g = Math.round(baseRgb.g + (activeRgb.g - baseRgb.g) * t);
+          const b = Math.round(baseRgb.b + (activeRgb.b - baseRgb.b) * t);
+          fillStyle = `rgb(${r},${g},${b})`;
+        }
+
+        // Draw dot
         ctx.save();
         ctx.translate(ox, oy);
-        ctx.fillStyle = style;
+        ctx.fillStyle = fillStyle;
         ctx.fill(circlePath);
         ctx.restore();
       }
 
-      rafId = requestAnimationFrame(draw);
+      rafId = requestAnimationFrame(animate);
     };
 
-    draw();
+    animate();
     return () => cancelAnimationFrame(rafId);
-  }, [proximity, baseColor, activeRgb, baseRgb, circlePath]);
+  }, [proximity, baseColor, activeRgb, baseRgb, circlePath, repelStrength, returnSpeed]);
 
+  // Grid building
   useEffect(() => {
     buildGrid();
     let ro = null;
@@ -151,24 +195,52 @@ const DotGrid = ({
     };
   }, [buildGrid]);
 
+  // Mouse movement
   useEffect(() => {
     const onMove = (e) => {
       const pr = pointerRef.current;
-      pr.lastX = e.clientX;
-      pr.lastY = e.clientY;
-
       const rect = canvasRef.current.getBoundingClientRect();
       pr.x = e.clientX - rect.left;
       pr.y = e.clientY - rect.top;
+      pr.lastX = e.clientX;
+      pr.lastY = e.clientY;
     };
 
-    const throttledMove = throttle(onMove, 50);
+    const throttledMove = throttle(onMove, 16);
     window.addEventListener('mousemove', throttledMove, { passive: true });
 
     return () => {
       window.removeEventListener('mousemove', throttledMove);
     };
   }, []);
+
+  // Click ripple effect
+  useEffect(() => {
+    const onClick = (e) => {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const clickX = e.clientX - rect.left;
+      const clickY = e.clientY - rect.top;
+
+      for (const dot of dotsRef.current) {
+        const dx = dot.cx - clickX;
+        const dy = dot.cy - clickY;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < clickRippleRadius) {
+          const falloff = 1 - dist / clickRippleRadius;
+          const force = clickRippleStrength * falloff;
+          const angle = Math.atan2(dy, dx);
+          
+          // Add impulse to velocity
+          dot.vx += Math.cos(angle) * force;
+          dot.vy += Math.sin(angle) * force;
+        }
+      }
+    };
+
+    window.addEventListener('click', onClick);
+    return () => window.removeEventListener('click', onClick);
+  }, [clickRippleRadius, clickRippleStrength]);
 
   return (
     <section className={`dot-grid ${className}`} style={style}>

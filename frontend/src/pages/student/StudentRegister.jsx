@@ -6,11 +6,11 @@ export default function StudentRegister() {
     <div className="auth-page">
       {/* DotGrid Background */}
       <DotGrid
-        dotSize={4}
-        gap={40}
-        baseColor="rgba(59, 130, 246, 0.3)"
-        activeColor="rgba(59, 130, 246, 0.8)"
-        proximity={120}
+        dotSize={6}
+        gap={25}
+        baseColor="rgba(59, 130, 246, 0.4)"
+        activeColor="rgba(59, 130, 246, 0.9)"
+        proximity={140}
         className="auth-background"
       />
       
