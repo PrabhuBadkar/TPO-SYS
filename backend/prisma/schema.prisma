@@ -1,239 +1,141 @@
-// TPO Management System - Prisma Schema
-// Generated: 2025-11-09
-// Database: PostgreSQL (NeonDB)
-
 generator client {
-  provider = "prisma-client-js"
+  provider        = "prisma-client-js"
   previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  schemas  = ["auth", "students", "recruiters", "core", "audit"]
+  schemas  = ["audit", "auth", "core", "recruiters", "students"]
 }
 
-// =====================================================
-// AUTH SCHEMA
-// =====================================================
-
 model User {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  email             String    @unique
-  mobile_number     String?   @db.VarChar(15)
-  encrypted_password String   @db.VarChar(255)
-  role              String    @db.VarChar(50)
-  
-  // Email verification
-  email_verified    Boolean   @default(false)
-  email_verification_token String? @db.VarChar(255)
-  email_verification_sent_at DateTime?
-  
-  // Mobile verification
-  mobile_verified   Boolean   @default(false)
-  mobile_verification_code String? @db.VarChar(6)
-  mobile_verification_sent_at DateTime?
-  
-  // MFA
-  mfa_enabled       Boolean   @default(false)
-  mfa_secret        String?   @db.VarChar(255)
-  mfa_backup_codes  String[]  @db.Text
-  
-  // Password reset
-  password_reset_token String? @db.VarChar(255)
-  password_reset_sent_at DateTime?
-  password_reset_expires_at DateTime?
-  
-  // Account status
-  is_active         Boolean   @default(true)
-  is_locked         Boolean   @default(false)
-  locked_at         DateTime?
-  locked_reason     String?   @db.Text
-  
-  // Login tracking
-  last_login_at     DateTime?
-  last_login_ip     String?   @db.VarChar(45)
-  failed_login_attempts Int   @default(0)
-  last_failed_login_at DateTime?
-  
-  // Timestamps
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  deleted_at        DateTime?
+  id                    String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  email                 String           @unique
+  mobile_number         String?          @unique
+  encrypted_password    String
+  role                  String
+  is_active             Boolean          @default(true)
+  is_verified           Boolean          @default(false)
+  email_verified_at     DateTime?
+  mobile_verified_at    DateTime?
+  last_login_at         DateTime?
+  login_count           Int              @default(0)
+  failed_login_attempts Int              @default(0)
+  locked_until          DateTime?
+  mfa_enabled           Boolean          @default(false)
+  mfa_secret            String?
+  created_at            DateTime         @default(now())
+  updated_at            DateTime         @updatedAt
+  deleted_at            DateTime?
+  createdProfiles       StudentProfile[] @relation("ProfileCreator")
+  verifiedProfiles      StudentProfile[] @relation("ProfileVerifier")
+  updatedProfiles       StudentProfile[] @relation("ProfileUpdater")
+  studentProfile        StudentProfile?
 
-  // Relations
-  studentProfile    StudentProfile?
-  createdProfiles   StudentProfile[] @relation("ProfileCreator")
-  updatedProfiles   StudentProfile[] @relation("ProfileUpdater")
-  verifiedProfiles  StudentProfile[] @relation("ProfileVerifier")
-  
   @@map("users")
   @@schema("auth")
 }
 
 model Session {
-  id                        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id                   String   @db.Uuid
-  
-  // Token information
-  access_token_hash         String   @db.VarChar(255)
-  refresh_token_hash        String   @db.VarChar(255)
-  
-  // Session metadata
-  ip_address                String?  @db.VarChar(45)
-  user_agent                String?  @db.Text
-  device_info               Json?
-  
-  // Expiry
-  access_token_expires_at   DateTime
-  refresh_token_expires_at  DateTime
-  
-  // Status
-  is_active                 Boolean  @default(true)
-  revoked_at                DateTime?
-  revoked_reason            String?  @db.Text
-  
-  // Timestamps
-  created_at                DateTime @default(now())
-  last_activity_at          DateTime @default(now())
+  id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id       String    @db.Uuid
+  token         String    @unique
+  refresh_token String?   @unique
+  ip_address    String?   @db.Inet
+  user_agent    String?
+  expires_at    DateTime
+  created_at    DateTime  @default(now())
+  revoked_at    DateTime?
 
   @@index([user_id])
-  @@index([access_token_hash])
-  @@index([refresh_token_hash])
-  @@index([is_active])
-  @@index([refresh_token_expires_at])
+  @@index([token])
   @@map("sessions")
   @@schema("auth")
 }
 
-model LoginHistory {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id         String?   @db.Uuid
-  email           String    @db.VarChar(255)
-  
-  // Attempt details
-  success         Boolean
-  failure_reason  String?   @db.VarChar(255)
-  
-  // Request metadata
-  ip_address      String?   @db.VarChar(45)
-  user_agent      String?   @db.Text
-  device_info     Json?
-  
-  // Timestamp
-  attempted_at    DateTime  @default(now())
-
-  @@index([user_id])
-  @@index([email])
-  @@index([attempted_at])
-  @@index([success])
-  @@map("login_history")
-  @@schema("auth")
-}
-
-// =====================================================
-// STUDENTS SCHEMA
-// =====================================================
-
 model StudentProfile {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id               String    @unique @db.Uuid
-  
-  // Personal Information
-  first_name            String    @db.VarChar(100)
-  middle_name           String?   @db.VarChar(100)
-  last_name             String    @db.VarChar(100)
-  mother_name           String?   @db.VarChar(100)
-  date_of_birth         DateTime  @db.Date
-  gender                String    @db.VarChar(50)
-  mobile_number         String    @db.VarChar(15)
-  alternate_mobile      String?   @db.VarChar(15)
-  personal_email        String    @db.VarChar(255)
-  address_permanent     String    @db.Text
-  address_current       String?   @db.Text
-  photo_url             String?   @db.Text
-  college_name          String    @default("ACER") @db.VarChar(100)
-  category              String?   @db.VarChar(50)
-  
-  // Academic Information
-  enrollment_number     String    @unique @db.VarChar(50)
-  roll_number           String?   @unique @db.VarChar(50)
-  department            String    @db.VarChar(50)
-  degree                String    @db.VarChar(50)
-  year_of_admission     Int
-  current_semester      Int
-  expected_graduation_year Int
-  cgpi                  Decimal?  @db.Decimal(4, 2)
-  active_backlogs       Boolean   @default(false)
-  backlog_history       Json      @default("{\"backlogs\": [], \"active_backlog_count\": 0, \"total_backlogs_ever\": 0}")
-  
-  // Documents
-  ssc_year_of_passing   Int?
-  ssc_board             String?   @db.VarChar(100)
-  ssc_percentage        Decimal?  @db.Decimal(5, 2)
-  ssc_marksheet_url     String?   @db.Text
-  hsc_year_of_passing   Int?
-  hsc_board             String?   @db.VarChar(100)
-  hsc_percentage        Decimal?  @db.Decimal(5, 2)
-  hsc_marksheet_url     String?   @db.Text
-  diploma_percentage    Decimal?  @db.Decimal(5, 2)
-  diploma_year_of_passing Int?
-  diploma_marksheet_url String?   @db.Text
-  is_direct_second_year Boolean   @default(false)
-  
-  // Career Preferences
-  skills                Json      @default("{\"skills\": []}")
-  projects              Json      @default("[]")
-  certifications        Json      @default("[]")
-  internships           Json      @default("[]")
-  competitive_profiles  Json      @default("{}")
-  preferred_job_roles   String[]
-  preferred_employment_type String? @db.VarChar(50)
-  preferred_locations   String[]
-  expected_ctc_min      Int?
-  expected_ctc_max      Int?
-  
-  // TPO Workflow
-  tpo_dept_assigned     String?   @db.Uuid
-  tpo_dept_verified     Boolean   @default(false)
-  tpo_dept_verified_at  DateTime?
-  tpo_dept_verified_by  String?   @db.Uuid
-  tpo_admin_verified    Boolean   @default(false)
-  tpo_admin_verified_at DateTime?
-  tpo_admin_verified_by String?   @db.Uuid
-  dept_review_notes     Json      @default("[]")
-  academic_data_flagged Boolean   @default(false)
-  academic_flag_notes   Json      @default("[]")
-  data_sharing_consent  Boolean   @default(false)
-  profile_complete_percent Int    @default(0)
-  profile_status        String    @default("DRAFT") @db.VarChar(50)
-  
-  // Calendar & Notifications
-  calendar_preferences  Json      @default("{\"timezone\": \"Asia/Kolkata\", \"default_view\": \"week\", \"notification_settings\": {}}")
-  google_calendar_sync  Boolean   @default(false)
-  outlook_calendar_sync Boolean   @default(false)
-  calendar_token        String?   @db.Text
-  notification_preferences Json   @default("{\"email\": true, \"sms\": true, \"push\": true, \"dnd_windows\": []}")
-  
-  // Audit
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-  deleted_at            DateTime?
-  created_by            String?   @db.Uuid
-  updated_by            String?   @db.Uuid
-  
-  // Relations
-  user                  User      @relation(fields: [user_id], references: [id], onDelete: Cascade)
-  creator               User?     @relation("ProfileCreator", fields: [created_by], references: [id])
-  updater               User?     @relation("ProfileUpdater", fields: [updated_by], references: [id])
-  verifier              User?     @relation("ProfileVerifier", fields: [tpo_dept_verified_by], references: [id])
-  
-  semesterMarks         SemesterMark[]
-  resumes               Resume[]
-  consents              Consent[]
-  eligibilityResults    EligibilityResult[]
-  documents             Document[]
-  
+  id                        String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                   String              @unique @db.Uuid
+  first_name                String              @db.VarChar(100)
+  middle_name               String?             @db.VarChar(100)
+  last_name                 String              @db.VarChar(100)
+  mother_name               String?             @db.VarChar(100)
+  date_of_birth             DateTime            @db.Date
+  gender                    String              @db.VarChar(50)
+  mobile_number             String              @db.VarChar(15)
+  alternate_mobile          String?             @db.VarChar(15)
+  personal_email            String              @db.VarChar(255)
+  address_permanent         String
+  address_current           String?
+  photo_url                 String?
+  college_name              String              @default("ACER") @db.VarChar(100)
+  category                  String?             @db.VarChar(50)
+  enrollment_number         String              @unique @db.VarChar(50)
+  roll_number               String?             @unique @db.VarChar(50)
+  department                String              @db.VarChar(50)
+  degree                    String              @db.VarChar(50)
+  year_of_admission         Int
+  current_semester          Int
+  expected_graduation_year  Int
+  cgpi                      Decimal?            @db.Decimal(4, 2)
+  active_backlogs           Boolean             @default(false)
+  backlog_history           Json                @default("{\"backlogs\": [], \"total_backlogs_ever\": 0, \"active_backlog_count\": 0}")
+  ssc_year_of_passing       Int?
+  ssc_board                 String?             @db.VarChar(100)
+  ssc_percentage            Decimal?            @db.Decimal(5, 2)
+  ssc_marksheet_url         String?
+  hsc_year_of_passing       Int?
+  hsc_board                 String?             @db.VarChar(100)
+  hsc_percentage            Decimal?            @db.Decimal(5, 2)
+  hsc_marksheet_url         String?
+  diploma_percentage        Decimal?            @db.Decimal(5, 2)
+  diploma_year_of_passing   Int?
+  diploma_marksheet_url     String?
+  is_direct_second_year     Boolean             @default(false)
+  skills                    Json                @default("{\"skills\": []}")
+  projects                  Json                @default("[]")
+  certifications            Json                @default("[]")
+  internships               Json                @default("[]")
+  competitive_profiles      Json                @default("{}")
+  preferred_job_roles       String[]
+  preferred_employment_type String?             @db.VarChar(50)
+  preferred_locations       String[]
+  expected_ctc_min          Int?
+  expected_ctc_max          Int?
+  tpo_dept_assigned         String?             @db.Uuid
+  tpo_dept_verified         Boolean             @default(false)
+  tpo_dept_verified_at      DateTime?
+  tpo_dept_verified_by      String?             @db.Uuid
+  tpo_admin_verified        Boolean             @default(false)
+  tpo_admin_verified_at     DateTime?
+  tpo_admin_verified_by     String?             @db.Uuid
+  dept_review_notes         Json                @default("[]")
+  academic_data_flagged     Boolean             @default(false)
+  academic_flag_notes       Json                @default("[]")
+  data_sharing_consent      Boolean             @default(false)
+  profile_complete_percent  Int                 @default(0)
+  profile_status            String              @default("DRAFT") @db.VarChar(50)
+  calendar_preferences      Json                @default("{\"timezone\": \"Asia/Kolkata\", \"default_view\": \"week\", \"notification_settings\": {}}")
+  google_calendar_sync      Boolean             @default(false)
+  outlook_calendar_sync     Boolean             @default(false)
+  calendar_token            String?
+  notification_preferences  Json                @default("{\"sms\": true, \"push\": true, \"email\": true, \"dnd_windows\": []}")
+  created_at                DateTime            @default(now())
+  updated_at                DateTime            @updatedAt
+  deleted_at                DateTime?
+  created_by                String?             @db.Uuid
+  updated_by                String?             @db.Uuid
+  consents                  Consent[]
+  documents                 Document[]
+  eligibilityResults        EligibilityResult[]
+  creator                   User?               @relation("ProfileCreator", fields: [created_by], references: [id])
+  verifier                  User?               @relation("ProfileVerifier", fields: [tpo_dept_verified_by], references: [id])
+  updater                   User?               @relation("ProfileUpdater", fields: [updated_by], references: [id])
+  user                      User                @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  resumes                   Resume[]
+  semesterMarks             SemesterMark[]
+
   @@index([enrollment_number])
   @@index([department])
   @@index([expected_graduation_year])
@@ -244,24 +146,23 @@ model StudentProfile {
 }
 
 model SemesterMark {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id        String    @db.Uuid
-  semester          Int
-  academic_year     String    @db.VarChar(20)
-  subjects          Json      @default("[]")
-  total_credits     Int
-  earned_credits    Int
-  spi               Decimal   @db.Decimal(4, 2)
-  has_backlogs      Boolean   @default(false)
-  backlog_subjects  String[]
-  is_editable       Boolean   @default(true)
-  edit_count        Int       @default(0)
-  last_edited_at    DateTime?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  
-  student           StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  
+  id               String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id       String         @db.Uuid
+  semester         Int
+  academic_year    String         @db.VarChar(20)
+  subjects         Json           @default("[]")
+  total_credits    Int
+  earned_credits   Int
+  spi              Decimal        @db.Decimal(4, 2)
+  has_backlogs     Boolean        @default(false)
+  backlog_subjects String[]
+  is_editable      Boolean        @default(true)
+  edit_count       Int            @default(0)
+  last_edited_at   DateTime?
+  created_at       DateTime       @default(now())
+  updated_at       DateTime       @updatedAt
+  student          StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
   @@unique([student_id, semester, academic_year])
   @@index([student_id])
   @@map("semester_marks")
@@ -269,24 +170,23 @@ model SemesterMark {
 }
 
 model Resume {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id            String    @db.Uuid
-  version               Int
-  file_name             String    @db.VarChar(255)
-  file_path             String    @db.Text
-  file_size             Int
-  file_hash             String    @db.VarChar(64)
-  parsed_data           Json      @default("{}")
-  parser_confidence_score Decimal? @db.Decimal(3, 2)
-  parsing_status        String?   @db.VarChar(50)
-  is_primary            Boolean   @default(false)
-  is_active             Boolean   @default(true)
-  watermark_applied     Boolean   @default(false)
-  watermark_text        String?   @db.Text
-  created_at            DateTime  @default(now())
-  
-  student               StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  
+  id                      String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id              String         @db.Uuid
+  version                 Int
+  file_name               String         @db.VarChar(255)
+  file_path               String
+  file_size               Int
+  file_hash               String         @db.VarChar(64)
+  parsed_data             Json           @default("{}")
+  parser_confidence_score Decimal?       @db.Decimal(3, 2)
+  parsing_status          String?        @db.VarChar(50)
+  is_primary              Boolean        @default(false)
+  is_active               Boolean        @default(true)
+  watermark_applied       Boolean        @default(false)
+  watermark_text          String?
+  created_at              DateTime       @default(now())
+  student                 StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
   @@unique([student_id, version])
   @@index([student_id])
   @@index([student_id, is_primary], map: "idx_resumes_primary")
@@ -295,25 +195,24 @@ model Resume {
 }
 
 model Consent {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id        String    @db.Uuid
-  job_posting_id    String?   @db.Uuid
-  recruiter_id      String?   @db.Uuid
-  consent_type      String    @db.VarChar(50)
-  consent_given     Boolean   @default(true)
-  consent_text      String    @db.Text
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String         @db.Uuid
+  job_posting_id    String?        @db.Uuid
+  recruiter_id      String?        @db.Uuid
+  consent_type      String         @db.VarChar(50)
+  consent_given     Boolean        @default(true)
+  consent_text      String
   data_shared       String[]
   access_expiry     DateTime?
-  revoked           Boolean   @default(false)
+  revoked           Boolean        @default(false)
   revoked_at        DateTime?
-  revocation_reason String?   @db.Text
-  ip_address        String?   @db.Inet
-  user_agent        String?   @db.Text
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  
+  revocation_reason String?
+  ip_address        String?        @db.Inet
+  user_agent        String?
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
   student           StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  
+
   @@index([student_id])
   @@index([job_posting_id])
   @@index([student_id, job_posting_id], map: "idx_consents_active")
@@ -322,18 +221,17 @@ model Consent {
 }
 
 model EligibilityResult {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id      String    @db.Uuid
-  job_posting_id  String    @db.Uuid
-  is_eligible     Boolean
-  reason_codes    Json      @default("[]")
-  computed_at     DateTime  @default(now())
-  rule_set_hash   String    @db.VarChar(64)
-  jd_version      Int
-  engine_version  String    @db.VarChar(20)
-  
-  student         StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id     String         @db.Uuid
+  job_posting_id String         @db.Uuid
+  is_eligible    Boolean
+  reason_codes   Json           @default("[]")
+  computed_at    DateTime       @default(now())
+  rule_set_hash  String         @db.VarChar(64)
+  jd_version     Int
+  engine_version String         @db.VarChar(20)
+  student        StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
   @@unique([student_id, job_posting_id, computed_at])
   @@index([student_id])
   @@index([job_posting_id])
@@ -343,68 +241,55 @@ model EligibilityResult {
 }
 
 model Document {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id        String    @db.Uuid
-  document_type     String    @db.VarChar(50)
-  document_name     String    @db.VarChar(255)
-  file_path         String    @db.Text
+  id                String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id        String         @db.Uuid
+  document_type     String         @db.VarChar(50)
+  document_name     String         @db.VarChar(255)
+  file_path         String
   file_size         Int
-  file_hash         String    @db.VarChar(64)
-  watermark_applied Boolean   @default(false)
-  verified          Boolean   @default(false)
-  verified_by       String?   @db.Uuid
+  file_hash         String         @db.VarChar(64)
+  watermark_applied Boolean        @default(false)
+  verified          Boolean        @default(false)
+  verified_by       String?        @db.Uuid
   verified_at       DateTime?
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  
+  created_at        DateTime       @default(now())
+  updated_at        DateTime       @updatedAt
   student           StudentProfile @relation(fields: [student_id], references: [id], onDelete: Cascade)
-  
+
   @@index([student_id])
   @@index([document_type])
   @@map("documents")
   @@schema("students")
 }
 
-// =====================================================
-// RECRUITERS SCHEMA
-// =====================================================
-
 model Organization {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  org_name              String    @db.VarChar(255)
-  website               String?   @db.VarChar(255)
-  industry              String?   @db.VarChar(100)
-  size                  String?   @db.VarChar(50) // 1-10, 11-50, 51-200, 201-500, 501-1000, 1000+
-  headquarters          String?   @db.VarChar(255)
-  branch_offices        String[]  @default([])
-  year_established      Int?
-  description           String?   @db.Text
-  
-  // Legal Verification
-  gst_number            String?   @db.VarChar(50)
-  cin                   String?   @db.VarChar(50)
-  pan                   String?   @db.VarChar(50)
-  registration_cert_url String?   @db.Text
-  authorization_letter_url String? @db.Text
-  
-  // Verification Status
-  recruiter_status      String    @default("PENDING_VERIFICATION") @db.VarChar(50) // PENDING_VERIFICATION, VERIFIED, REJECTED, BLACKLISTED
-  verified_at           DateTime?
-  verified_by           String?   @db.Uuid
-  rejection_reason      String?   @db.Text
-  blacklist_reason      String?   @db.Text
-  blacklisted_at        DateTime?
-  blacklisted_by        String?   @db.Uuid
-  
-  // Audit
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-  deleted_at            DateTime?
-  
-  // Relations
-  pocs                  POC[]
-  jobPostings           JobPosting[]
-  
+  id                       String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_name                 String       @db.VarChar(255)
+  website                  String?      @db.VarChar(255)
+  industry                 String?      @db.VarChar(100)
+  size                     String?      @db.VarChar(50)
+  headquarters             String?      @db.VarChar(255)
+  branch_offices           String[]     @default([])
+  year_established         Int?
+  description              String?
+  gst_number               String?      @db.VarChar(50)
+  cin                      String?      @db.VarChar(50)
+  pan                      String?      @db.VarChar(50)
+  registration_cert_url    String?
+  authorization_letter_url String?
+  recruiter_status         String       @default("PENDING_VERIFICATION") @db.VarChar(50)
+  verified_at              DateTime?
+  verified_by              String?      @db.Uuid
+  rejection_reason         String?
+  blacklist_reason         String?
+  blacklisted_at           DateTime?
+  blacklisted_by           String?      @db.Uuid
+  created_at               DateTime     @default(now())
+  updated_at               DateTime     @updatedAt
+  deleted_at               DateTime?
+  jobPostings              JobPosting[]
+  pocs                     POC[]
+
   @@index([recruiter_status])
   @@index([org_name])
   @@map("organizations")
@@ -412,30 +297,22 @@ model Organization {
 }
 
 model POC {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  org_id            String    @db.Uuid
-  user_id           String    @unique @db.Uuid
-  
-  // POC Details
-  poc_name          String    @db.VarChar(255)
-  designation       String    @db.VarChar(100)
-  department        String?   @db.VarChar(100) // HR, Campus Relations, Hiring Manager
-  email             String    @db.VarChar(255)
-  mobile_number     String    @db.VarChar(15)
-  linkedin_profile  String?   @db.VarChar(255)
-  
-  // POC Status
-  is_primary        Boolean   @default(false)
-  is_active         Boolean   @default(true)
-  
-  // Audit
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  
-  // Relations
-  organization      Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
-  jobPostings       JobPosting[]
-  
+  id               String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id           String       @db.Uuid
+  user_id          String       @unique @db.Uuid
+  poc_name         String       @db.VarChar(255)
+  designation      String       @db.VarChar(100)
+  department       String?      @db.VarChar(100)
+  email            String       @db.VarChar(255)
+  mobile_number    String       @db.VarChar(15)
+  linkedin_profile String?      @db.VarChar(255)
+  is_primary       Boolean      @default(false)
+  is_active        Boolean      @default(true)
+  created_at       DateTime     @default(now())
+  updated_at       DateTime     @updatedAt
+  jobPostings      JobPosting[]
+  organization     Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
+
   @@index([org_id])
   @@index([user_id])
   @@index([email])
@@ -444,54 +321,34 @@ model POC {
 }
 
 model JobPosting {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  org_id                String    @db.Uuid
-  created_by            String    @db.Uuid // POC user_id
-  
-  // Job Details
-  job_title             String    @db.VarChar(255)
-  description           String    @db.Text
-  required_skills       String[]  @default([])
-  qualifications        String?   @db.Text
-  responsibilities      String?   @db.Text
-  
-  // Work Details
-  work_location         String    @db.VarChar(255)
-  employment_type       String    @db.VarChar(50) // Full-Time, Internship, Part-Time, Contract
-  
-  // Eligibility Criteria (JSONB)
-  eligibility_criteria  Json      @default("{\"cgpa_min\": 6.0, \"max_backlogs\": 0, \"allowed_branches\": [], \"graduation_year\": 2025, \"degree\": []}")
-  
-  // Compensation (JSONB)
-  ctc_breakdown         Json      @default("{\"base_salary\": 0, \"variable_pay\": 0, \"benefits\": 0, \"joining_bonus\": 0, \"total_ctc\": 0}")
-  
-  // Selection Process (JSONB)
-  selection_process     Json      @default("{\"rounds\": [], \"timeline\": \"\", \"mode\": \"Online\"}")
-  
-  // Bond Terms (JSONB)
-  bond_terms            Json?     @default("{\"duration_months\": 0, \"amount\": 0, \"terms\": \"\", \"notice_period_days\": 0}")
-  
-  // Application Details
-  application_deadline  DateTime
-  
-  // Status
-  status                String    @default("DRAFT") @db.VarChar(50) // DRAFT, PENDING_APPROVAL, APPROVED, REJECTED, ACTIVE, PAUSED, CLOSED
-  approved_at           DateTime?
-  approved_by           String?   @db.Uuid
-  rejection_reason      String?   @db.Text
-  modifications_requested String? @db.Text
-  
-  // Audit
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-  deleted_at            DateTime?
-  
-  // Relations
-  organization          Organization @relation(fields: [org_id], references: [id], onDelete: Cascade)
-  poc                   POC       @relation(fields: [created_by], references: [user_id])
-  applications          JobApplication[]
-  offers                Offer[]
-  
+  id                      String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  org_id                  String           @db.Uuid
+  created_by              String           @db.Uuid
+  job_title               String           @db.VarChar(255)
+  description             String
+  required_skills         String[]         @default([])
+  qualifications          String?
+  responsibilities        String?
+  work_location           String           @db.VarChar(255)
+  employment_type         String           @db.VarChar(50)
+  eligibility_criteria    Json             @default("{\"degree\": [], \"cgpa_min\": 6.0, \"max_backlogs\": 0, \"graduation_year\": 2025, \"allowed_branches\": []}")
+  ctc_breakdown           Json             @default("{\"benefits\": 0, \"total_ctc\": 0, \"base_salary\": 0, \"variable_pay\": 0, \"joining_bonus\": 0}")
+  selection_process       Json             @default("{\"mode\": \"Online\", \"rounds\": [], \"timeline\": \"\"}")
+  bond_terms              Json?            @default("{\"terms\": \"\", \"amount\": 0, \"duration_months\": 0, \"notice_period_days\": 0}")
+  application_deadline    DateTime
+  status                  String           @default("DRAFT") @db.VarChar(50)
+  approved_at             DateTime?
+  approved_by             String?          @db.Uuid
+  rejection_reason        String?
+  modifications_requested String?
+  created_at              DateTime         @default(now())
+  updated_at              DateTime         @updatedAt
+  deleted_at              DateTime?
+  applications            JobApplication[]
+  poc                     POC              @relation(fields: [created_by], references: [user_id])
+  organization            Organization     @relation(fields: [org_id], references: [id], onDelete: Cascade)
+  offers                  Offer[]
+
   @@index([org_id])
   @@index([status])
   @@index([application_deadline])
@@ -501,47 +358,33 @@ model JobPosting {
 }
 
 model JobApplication {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id            String    @db.Uuid
-  job_posting_id        String    @db.Uuid
-  resume_id             String    @db.Uuid
-  cover_letter          String?   @db.Text
-  consent_id            String?   @db.Uuid
-  
-  // Application Status
-  status                String    @default("SUBMITTED") @db.VarChar(50) // SUBMITTED, PENDING_DEPT, PENDING_ADMIN, FORWARDED, SHORTLISTED, REJECTED, OFFERED, ACCEPTED
-  
-  // Review Workflow
-  reviewed_by_dept      String?   @db.Uuid
-  reviewed_by_dept_at   DateTime?
-  dept_review_notes     String?   @db.Text
-  
-  reviewed_by_admin     String?   @db.Uuid
-  reviewed_by_admin_at  DateTime?
-  admin_review_notes    String?   @db.Text
-  
-  forwarded_to_recruiter Boolean  @default(false)
-  forwarded_at          DateTime?
-  
-  // Shortlisting
-  shortlisted           Boolean   @default(false)
-  shortlisted_at        DateTime?
-  shortlisted_by        String?   @db.Uuid
-  shortlist_notes       String?   @db.Text
-  
-  // Rejection
-  rejection_reason      String?   @db.Text
-  rejected_at           DateTime?
-  rejected_by           String?   @db.Uuid
-  
-  // Audit
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-  
-  // Relations
-  jobPosting            JobPosting @relation(fields: [job_posting_id], references: [id], onDelete: Cascade)
-  offers                Offer[]
-  
+  id                     String     @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id             String     @db.Uuid
+  job_posting_id         String     @db.Uuid
+  resume_id              String     @db.Uuid
+  cover_letter           String?
+  consent_id             String?    @db.Uuid
+  status                 String     @default("SUBMITTED") @db.VarChar(50)
+  reviewed_by_dept       String?    @db.Uuid
+  reviewed_by_dept_at    DateTime?
+  dept_review_notes      String?
+  reviewed_by_admin      String?    @db.Uuid
+  reviewed_by_admin_at   DateTime?
+  admin_review_notes     String?
+  forwarded_to_recruiter Boolean    @default(false)
+  forwarded_at           DateTime?
+  shortlisted            Boolean    @default(false)
+  shortlisted_at         DateTime?
+  shortlisted_by         String?    @db.Uuid
+  shortlist_notes        String?
+  rejection_reason       String?
+  rejected_at            DateTime?
+  rejected_by            String?    @db.Uuid
+  created_at             DateTime   @default(now())
+  updated_at             DateTime   @updatedAt
+  jobPosting             JobPosting @relation(fields: [job_posting_id], references: [id], onDelete: Cascade)
+  offers                 Offer[]
+
   @@index([student_id])
   @@index([job_posting_id])
   @@index([status])
@@ -551,39 +394,27 @@ model JobApplication {
 }
 
 model Offer {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id            String    @db.Uuid
-  job_posting_id        String    @db.Uuid
-  application_id        String    @db.Uuid
-  
-  // Offer Details
-  ctc_breakdown         Json      @default("{\"base_salary\": 0, \"variable_pay\": 0, \"benefits\": 0, \"joining_bonus\": 0, \"total_ctc\": 0}")
-  joining_date          DateTime?
-  offer_letter_url      String?   @db.Text
-  offer_expiry          DateTime
-  
-  // Status
-  status                String    @default("EXTENDED") @db.VarChar(50) // EXTENDED, ACCEPTED, REJECTED, EXPIRED, RESCINDED
-  
-  // Acceptance/Rejection
-  accepted_at           DateTime?
-  rejected_at           DateTime?
-  rejection_reason      String?   @db.Text
-  
-  // Rescind
-  rescinded_at          DateTime?
-  rescinded_by          String?   @db.Uuid
-  rescind_reason        String?   @db.Text
-  rescind_approved_by   String?   @db.Uuid
-  
-  // Audit
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-  
-  // Relations
-  jobPosting            JobPosting @relation(fields: [job_posting_id], references: [id], onDelete: Cascade)
-  application           JobApplication @relation(fields: [application_id], references: [id], onDelete: Cascade)
-  
+  id                  String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id          String         @db.Uuid
+  job_posting_id      String         @db.Uuid
+  application_id      String         @db.Uuid
+  ctc_breakdown       Json           @default("{\"benefits\": 0, \"total_ctc\": 0, \"base_salary\": 0, \"variable_pay\": 0, \"joining_bonus\": 0}")
+  joining_date        DateTime?
+  offer_letter_url    String?
+  offer_expiry        DateTime
+  status              String         @default("EXTENDED") @db.VarChar(50)
+  accepted_at         DateTime?
+  rejected_at         DateTime?
+  rejection_reason    String?
+  rescinded_at        DateTime?
+  rescinded_by        String?        @db.Uuid
+  rescind_reason      String?
+  rescind_approved_by String?        @db.Uuid
+  created_at          DateTime       @default(now())
+  updated_at          DateTime       @updatedAt
+  application         JobApplication @relation(fields: [application_id], references: [id], onDelete: Cascade)
+  jobPosting          JobPosting     @relation(fields: [job_posting_id], references: [id], onDelete: Cascade)
+
   @@index([student_id])
   @@index([job_posting_id])
   @@index([application_id])
@@ -592,37 +423,23 @@ model Offer {
   @@schema("recruiters")
 }
 
-// =====================================================
-// CORE SCHEMA (TPO_DEPT & SHARED)
-// =====================================================
-
 model TPODeptCoordinator {
-  id                    String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  user_id               String    @unique @db.Uuid
-  
-  // Coordinator Details
-  dept_coordinator_name String    @db.VarChar(255)
-  employee_id           String?   @db.VarChar(50)
-  primary_department    String    @db.VarChar(50)
-  assigned_departments  String[]  @default([])
-  
-  // Permissions
-  can_verify_profiles   Boolean   @default(true)
-  can_process_applications Boolean @default(true)
-  can_create_events     Boolean   @default(true)
-  can_send_communications Boolean @default(true)
-  
-  // Preferences
-  calendar_preferences  Json      @default("{\"timezone\": \"Asia/Kolkata\", \"default_view\": \"week\"}")
-  reminder_templates    Json      @default("[]")
-  
-  // Status
-  is_active             Boolean   @default(true)
-  
-  // Audit
-  created_at            DateTime  @default(now())
-  updated_at            DateTime  @updatedAt
-  
+  id                       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id                  String   @unique @db.Uuid
+  dept_coordinator_name    String   @db.VarChar(255)
+  employee_id              String?  @db.VarChar(50)
+  primary_department       String   @db.VarChar(50)
+  assigned_departments     String[] @default([])
+  can_verify_profiles      Boolean  @default(true)
+  can_process_applications Boolean  @default(true)
+  can_create_events        Boolean  @default(true)
+  can_send_communications  Boolean  @default(true)
+  calendar_preferences     Json     @default("{\"timezone\": \"Asia/Kolkata\", \"default_view\": \"week\"}")
+  reminder_templates       Json     @default("[]")
+  is_active                Boolean  @default(true)
+  created_at               DateTime @default(now())
+  updated_at               DateTime @updatedAt
+
   @@index([user_id])
   @@index([primary_department])
   @@map("tpo_dept_coordinators")
@@ -630,27 +447,19 @@ model TPODeptCoordinator {
 }
 
 model ExamCorrectionRequest {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id        String    @db.Uuid
-  created_by        String    @db.Uuid // TPO_Dept coordinator user_id
-  
-  // Issue Details
-  issue_type        String    @db.VarChar(50) // CGPI_MISMATCH, BACKLOG_MISMATCH, MARKS_ERROR, OTHER
-  description       String    @db.Text
-  supporting_docs   String[]  @default([])
-  
-  // Status
-  status            String    @default("PENDING") @db.VarChar(50) // PENDING, APPROVED, REJECTED, IN_PROGRESS
-  
-  // Exam Cell Review
-  exam_cell_notes   String?   @db.Text
-  reviewed_by       String?   @db.Uuid
-  reviewed_at       DateTime?
-  
-  // Audit
-  created_at        DateTime  @default(now())
-  updated_at        DateTime  @updatedAt
-  
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id      String    @db.Uuid
+  created_by      String    @db.Uuid
+  issue_type      String    @db.VarChar(50)
+  description     String
+  supporting_docs String[]  @default([])
+  status          String    @default("PENDING") @db.VarChar(50)
+  exam_cell_notes String?
+  reviewed_by     String?   @db.Uuid
+  reviewed_at     DateTime?
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
   @@index([student_id])
   @@index([created_by])
   @@index([status])
@@ -659,32 +468,22 @@ model ExamCorrectionRequest {
 }
 
 model CommunicationLog {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  sender_id         String    @db.Uuid
-  sender_type       String    @db.VarChar(50) // TPO_DEPT, TPO_ADMIN, SYSTEM
-  
-  // Recipients
-  recipient_type    String    @db.VarChar(50) // STUDENT, DEPARTMENT, ALL, CUSTOM
-  recipient_ids     String[]  @default([])
-  
-  // Message Details
-  subject           String    @db.VarChar(500)
-  body              String    @db.Text
-  message_type      String    @db.VarChar(50) // ANNOUNCEMENT, REMINDER, NOTIFICATION, ALERT
-  
-  // Delivery Status
-  delivery_status   String    @default("PENDING") @db.VarChar(50) // PENDING, SENT, DELIVERED, FAILED
-  sent_count        Int       @default(0)
-  delivered_count   Int       @default(0)
-  read_count        Int       @default(0)
-  
-  // Scheduling
-  scheduled_at      DateTime?
-  sent_at           DateTime?
-  
-  // Audit
-  created_at        DateTime  @default(now())
-  
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  sender_id       String    @db.Uuid
+  sender_type     String    @db.VarChar(50)
+  recipient_type  String    @db.VarChar(50)
+  recipient_ids   String[]  @default([])
+  subject         String    @db.VarChar(500)
+  body            String
+  message_type    String    @db.VarChar(50)
+  delivery_status String    @default("PENDING") @db.VarChar(50)
+  sent_count      Int       @default(0)
+  delivered_count Int       @default(0)
+  read_count      Int       @default(0)
+  scheduled_at    DateTime?
+  sent_at         DateTime?
+  created_at      DateTime  @default(now())
+
   @@index([sender_id])
   @@index([sender_type])
   @@index([message_type])
@@ -694,27 +493,19 @@ model CommunicationLog {
 }
 
 model ReminderHistory {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  student_id        String    @db.Uuid
-  
-  // Reminder Details
-  reminder_type     String    @db.VarChar(50) // PROFILE_COMPLETION, VERIFICATION_PENDING, APPLICATION_DEADLINE, DOCUMENT_CORRECTION, INTERVIEW_TEST
-  subject           String    @db.VarChar(500)
-  body              String    @db.Text
-  
-  // Delivery
-  channel           String    @db.VarChar(50) // EMAIL, SMS, PUSH, IN_APP
-  delivery_status   String    @db.VarChar(50) // SENT, DELIVERED, FAILED, READ
-  
-  // Student Action
-  action_taken      Boolean   @default(false)
-  action_type       String?   @db.VarChar(50) // PROFILE_UPDATED, APPLICATION_SUBMITTED, DOCUMENT_UPLOADED, RSVP_CONFIRMED
-  action_at         DateTime?
-  
-  // Audit
-  sent_at           DateTime  @default(now())
-  created_at        DateTime  @default(now())
-  
+  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  student_id      String    @db.Uuid
+  reminder_type   String    @db.VarChar(50)
+  subject         String    @db.VarChar(500)
+  body            String
+  channel         String    @db.VarChar(50)
+  delivery_status String    @db.VarChar(50)
+  action_taken    Boolean   @default(false)
+  action_type     String?   @db.VarChar(50)
+  action_at       DateTime?
+  sent_at         DateTime  @default(now())
+  created_at      DateTime  @default(now())
+
   @@index([student_id])
   @@index([reminder_type])
   @@index([delivery_status])
@@ -723,27 +514,19 @@ model ReminderHistory {
 }
 
 model ReportExport {
-  id                String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
-  // Report Details
-  report_type       String    @db.VarChar(100) // PLACEMENT_SUMMARY, STUDENT_ELIGIBILITY, APPLICATION_STATUS, VERIFICATION_PENDING, OFFER_ACCEPTANCE
-  report_name       String    @db.VarChar(255)
-  filters           Json      @default("{}")
-  format            String    @db.VarChar(10) // PDF, EXCEL, CSV
-  
-  // File Details
-  file_path         String    @db.Text
-  file_size         Int?
-  
-  // Access Control
-  generated_by      String    @db.Uuid
-  department        String?   @db.VarChar(50)
-  access_expiry     DateTime?
-  download_count    Int       @default(0)
-  
-  // Audit
-  created_at        DateTime  @default(now())
-  
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  report_type    String    @db.VarChar(100)
+  report_name    String    @db.VarChar(255)
+  filters        Json      @default("{}")
+  format         String    @db.VarChar(10)
+  file_path      String
+  file_size      Int?
+  generated_by   String    @db.Uuid
+  department     String?   @db.VarChar(50)
+  access_expiry  DateTime?
+  download_count Int       @default(0)
+  created_at     DateTime  @default(now())
+
   @@index([generated_by])
   @@index([department])
   @@index([report_type])
@@ -751,22 +534,18 @@ model ReportExport {
   @@schema("core")
 }
 
-// =====================================================
-// AUDIT & APPROVALS SCHEMA
-// =====================================================
-
 model AuditEvent {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  actor_id        String    @db.Uuid
-  action          String    @db.VarChar(100)
-  resource_type   String    @db.VarChar(100)
-  resource_id     String?   @db.Uuid
-  changes         Json      @default("{}")
-  ip_address      String?   @db.Inet
-  user_agent      String?   @db.Text
-  metadata        Json      @default("{}")
-  timestamp       DateTime  @default(now())
-  
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actor_id      String   @db.Uuid
+  action        String   @db.VarChar(100)
+  resource_type String   @db.VarChar(100)
+  resource_id   String?  @db.Uuid
+  changes       Json     @default("{}")
+  ip_address    String?  @db.Inet
+  user_agent    String?
+  metadata      Json     @default("{}")
+  timestamp     DateTime @default(now())
+
   @@index([actor_id])
   @@index([action])
   @@index([resource_type])
@@ -777,30 +556,20 @@ model AuditEvent {
 }
 
 model ApprovalRequest {
-  id              String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  
-  // Request Details
-  request_type    String    @db.VarChar(50) // BLACKLIST_ORG, OVERRIDE_PROFILE_VERIFICATION, OVERRIDE_APP_DECISION, POLICY_CHANGE, OFFER_RESCIND
-  resource_type   String    @db.VarChar(100)
-  resource_id     String    @db.Uuid
-  
-  // Workflow
-  initiator_id    String    @db.Uuid
-  approver_id     String?   @db.Uuid
-  status          String    @default("PENDING") @db.VarChar(50) // PENDING, APPROVED, REJECTED
-  
-  // Justification
-  justification   String    @db.Text
-  proposed_changes Json     @default("{}")
-  
-  // Decision
-  decision_notes  String?   @db.Text
-  decided_at      DateTime?
-  
-  // Audit
-  created_at      DateTime  @default(now())
-  updated_at      DateTime  @updatedAt
-  
+  id               String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  request_type     String    @db.VarChar(50)
+  resource_type    String    @db.VarChar(100)
+  resource_id      String    @db.Uuid
+  initiator_id     String    @db.Uuid
+  approver_id      String?   @db.Uuid
+  status           String    @default("PENDING") @db.VarChar(50)
+  justification    String
+  proposed_changes Json      @default("{}")
+  decision_notes   String?
+  decided_at       DateTime?
+  created_at       DateTime  @default(now())
+  updated_at       DateTime  @updatedAt
+
   @@index([initiator_id])
   @@index([approver_id])
   @@index([status])

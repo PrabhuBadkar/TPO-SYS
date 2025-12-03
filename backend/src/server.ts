@@ -37,6 +37,8 @@ import tpoAdminApplicationsRoutes from './routes/tpo-admin-applications.routes';
 import tpoAdminStudentsRoutes from './routes/tpo-admin-students.routes';
 import tpoAdminCalendarRoutes from './routes/tpo-admin-calendar.routes';
 import tpoAdminCommunicationsRoutes from './routes/tpo-admin-communications.routes';
+import adminStatsRoutes from './routes/admin/stats.routes';
+import adminStudentsRoutes from './routes/admin/students.routes';
 
 // TPO Dept routes
 import tpoDeptRoutes from './routes/tpo-dept.routes';
@@ -157,6 +159,8 @@ app.use('/api/public/recruiters/analytics', recruiterAnalyticsRoutes);
 
 // API routes - TPO Admin
 app.use('/api/internal/admin', tpoAdminRoutes);
+app.use('/api/internal/admin/stats', adminStatsRoutes);
+app.use('/api/internal/admin/students', adminStudentsRoutes);
 app.use('/api/internal/admin/job-postings', tpoAdminJobsRoutes);
 app.use('/api/internal/admin/applications', tpoAdminApplicationsRoutes);
 app.use('/api/internal/admin/students', tpoAdminStudentsRoutes);

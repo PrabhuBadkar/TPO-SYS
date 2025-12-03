@@ -66,7 +66,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
         encrypted_password: true,
         role: true,
         is_active: true,
-        email_verified: true,
+        is_verified: true,
       },
     })
 
@@ -193,7 +193,7 @@ router.post('/login', async (req: Request, res: Response): Promise<void> => {
           id: user.id,
           email: user.email,
           role: user.role,
-          emailVerified: user.email_verified,
+          emailVerified: user.is_verified,
         },
         tokens: {
           accessToken,
@@ -248,7 +248,7 @@ router.post('/login/student', async (req: Request, res: Response): Promise<void>
             encrypted_password: true,
             role: true,
             is_active: true,
-            email_verified: true,
+            is_verified: true,
           },
         },
       },
@@ -350,7 +350,7 @@ router.post('/login/student', async (req: Request, res: Response): Promise<void>
           id: user.id,
           email: user.email,
           role: user.role,
-          emailVerified: user.email_verified,
+          emailVerified: user.is_verified,
         },
         profile: {
           id: profile.id,
@@ -442,7 +442,7 @@ router.post('/register/student', async (req: Request, res: Response): Promise<vo
           encrypted_password: hashedPassword,
           role: 'ROLE_STUDENT',
           is_active: true,
-          email_verified: false,
+          is_verified: false,
         },
       })
 
@@ -551,7 +551,7 @@ router.post('/register/recruiter', async (req: Request, res: Response): Promise<
         encrypted_password: hashedPassword,
         role: 'ROLE_RECRUITER',
         is_active: false, // Requires TPO Admin verification
-        email_verified: false,
+        is_verified: false,
       },
     })
 
@@ -650,7 +650,7 @@ router.get('/me', authenticate, async (req: Request, res: Response): Promise<voi
         email: true,
         role: true,
         is_active: true,
-        email_verified: true,
+        is_verified: true,
         created_at: true,
         last_login_at: true,
       },

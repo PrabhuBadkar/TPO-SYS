@@ -89,17 +89,16 @@ export default function StudentLogin() {
         // Store tokens in localStorage
         localStorage.setItem('accessToken', data.data.tokens.accessToken);
         localStorage.setItem('refreshToken', data.data.tokens.refreshToken);
+        localStorage.setItem('userRole', 'ROLE_STUDENT');
         localStorage.setItem('user', JSON.stringify(data.data.user));
         localStorage.setItem('profile', JSON.stringify(data.data.profile));
 
         // Show beautiful welcome toast
         showToast(`Welcome back, ${data.data.profile.firstName}! 🎉`, 'success');
         
-        // Navigate after toast shows
+        // Navigate to student dashboard
         setTimeout(() => {
-          // TODO: Navigate to student dashboard
-          // navigate('/student/dashboard');
-          console.log('Login successful:', data);
+          navigate('/student/dashboard');
         }, 2000);
       } else {
         // Login failed
