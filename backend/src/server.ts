@@ -15,6 +15,8 @@ export const prisma = new PrismaClient();
 // Import routes
 import authRoutes from './routes/auth.routes';
 import studentProfileRoutes from './routes/student/profile';
+import studentProfileCompletionRoutes from './routes/student/profile-completion.routes';
+import studentUploadRoutes from './routes/student/upload.routes';
 import studentResumeRoutes from './routes/student/resume';
 import studentConsentRoutes from './routes/student/consent';
 import studentDocumentRoutes from './routes/student/document';
@@ -143,6 +145,8 @@ app.use('/api/auth', authRoutes);
 
 // API routes - Student
 app.use('/api/public/profile', studentProfileRoutes);
+app.use('/api/public/profile', studentProfileCompletionRoutes);
+app.use('/api/public/upload', studentUploadRoutes);
 app.use('/api/public/resume', studentResumeRoutes);
 app.use('/api/public/consents', studentConsentRoutes);
 app.use('/api/public/documents', studentDocumentRoutes);
