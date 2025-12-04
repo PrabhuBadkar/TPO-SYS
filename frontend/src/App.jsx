@@ -102,11 +102,8 @@ export default function Landing() {
                   </div>
                 </div>
 
-                {/* Recruiter Card */}
-                <Link 
-                  to="/login?role=recruiter" 
-                  className="card-link group card-green"
-                >
+                {/* Recruiter Card - With Login and Register Buttons */}
+                <div className="card-link-static group">
                   <div className="card-content">
                     <div className="icon-wrapper icon-green">
                       <Briefcase />
@@ -115,16 +112,24 @@ export default function Landing() {
                     <p className="card-description">
                       Post jobs, review applications, and hire top talent
                     </p>
-                    <div className="card-action text-green-400">
-                      <span>Get Started</span>
-                      <ArrowRight />
+                    
+                    {/* Dual Action Buttons */}
+                    <div className="dual-action-buttons">
+                      <Link to="/login?role=recruiter" className="action-btn action-btn-login">
+                        <LoginIcon />
+                        <span>Login</span>
+                      </Link>
+                      <Link to="/register?role=recruiter" className="action-btn action-btn-register">
+                        <RegisterIcon />
+                        <span>Register</span>
+                      </Link>
                     </div>
                   </div>
-                </Link>
+                </div>
 
                 {/* TPO Admin Card */}
                 <Link 
-                  to="/tpo-admin/login" 
+                  to="/login?role=tpo-admin" 
                   className="card-link group card-purple"
                 >
                   <div className="card-content">

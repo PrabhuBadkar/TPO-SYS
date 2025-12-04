@@ -14,6 +14,7 @@ export const prisma = new PrismaClient();
 
 // Import routes
 import authRoutes from './routes/auth.routes';
+import recruiterAuthRoutes from './routes/recruiter-auth.routes';
 import studentProfileRoutes from './routes/student/profile';
 import studentProfileCompletionRoutes from './routes/student/profile-completion.routes';
 import studentUploadRoutes from './routes/student/upload.routes';
@@ -27,6 +28,7 @@ import studentDashboardRoutes from './routes/student/dashboard';
 // Recruiter routes
 import recruiterOrganizationRoutes from './routes/recruiter/organization';
 import recruiterJobRoutes from './routes/recruiter/jobs';
+import recruiterJobsNewRoutes from './routes/recruiter-jobs.routes';
 import recruiterApplicationRoutes from './routes/recruiter/applications';
 import recruiterOfferRoutes from './routes/recruiter/offers';
 import recruiterAnalyticsRoutes from './routes/recruiter/analytics';
@@ -35,8 +37,10 @@ import recruiterAnalyticsRoutes from './routes/recruiter/analytics';
 import tpoAdminRoutes from './routes/tpo-admin.routes';
 import tpoAdminApprovalsRoutes from './routes/tpo-admin-approvals.routes';
 import tpoAdminJobsRoutes from './routes/tpo-admin-jobs.routes';
+import tpoAdminJobsNewRoutes from './routes/tpo-admin-jobs.routes';
 import tpoAdminApplicationsRoutes from './routes/tpo-admin-applications.routes';
 import tpoAdminStudentsRoutes from './routes/tpo-admin-students.routes';
+import tpoAdminRecruitersRoutes from './routes/tpo-admin-recruiters.routes';
 import tpoAdminCalendarRoutes from './routes/tpo-admin-calendar.routes';
 import tpoAdminCommunicationsRoutes from './routes/tpo-admin-communications.routes';
 import adminStatsRoutes from './routes/admin/stats.routes';
@@ -142,6 +146,7 @@ app.get('/health', (req: Request, res: Response) => {
 
 // API routes - Auth
 app.use('/api/auth', authRoutes);
+app.use('/api/auth', recruiterAuthRoutes);
 
 // API routes - Student
 app.use('/api/public/profile', studentProfileRoutes);
@@ -156,21 +161,22 @@ app.use('/api/public/dashboard', studentDashboardRoutes);
 
 // API routes - Recruiter
 app.use('/api/public/recruiters', recruiterOrganizationRoutes);
-app.use('/api/public/recruiters/jobs', recruiterJobRoutes);
+app.use('/api/public/recruiters/jobs', recruiterJobsNewRoutes); // New job posting routes
 app.use('/api/public/recruiters/applications', recruiterApplicationRoutes);
 app.use('/api/public/recruiters/offers', recruiterOfferRoutes);
 app.use('/api/public/recruiters/analytics', recruiterAnalyticsRoutes);
 
 // API routes - TPO Admin
-app.use('/api/internal/admin', tpoAdminRoutes);
+// app.use('/api/internal/admin', tpoAdminRoutes); // Commented out - using specific routes below
 app.use('/api/internal/admin/stats', adminStatsRoutes);
 app.use('/api/internal/admin/students', adminStudentsRoutes);
-app.use('/api/internal/admin/job-postings', tpoAdminJobsRoutes);
+app.use('/api/internal/admin/jobs', tpoAdminJobsNewRoutes); // New job approval routes
 app.use('/api/internal/admin/applications', tpoAdminApplicationsRoutes);
 app.use('/api/internal/admin/students', tpoAdminStudentsRoutes);
+app.use('/api/internal/admin/recruiters', tpoAdminRecruitersRoutes);
 app.use('/api/internal/admin/calendar', tpoAdminCalendarRoutes);
 app.use('/api/internal/admin/communications', tpoAdminCommunicationsRoutes);
-app.use('/api/tpo-admin', tpoAdminRoutes); // Legacy path
+app.use('/api/tpo-admin', tpoAdminRoutes); // Legacy path for dashboard stats, queues, notifications
 app.use('/api/tpo-admin/approvals', tpoAdminApprovalsRoutes);
 
 // API routes - TPO Dept

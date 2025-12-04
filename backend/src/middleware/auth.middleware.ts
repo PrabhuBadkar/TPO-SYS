@@ -128,6 +128,7 @@ export const authenticate = async (
 export const authorize = (...allowedRoles: string[]) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     if (!req.user) {
+      console.log('Authorization failed: No user in request');
       res.status(401).json({
         success: false,
         error: 'Not authenticated',
@@ -136,7 +137,14 @@ export const authorize = (...allowedRoles: string[]) => {
       return
     }
 
+    console.log('Authorization check:', {
+      userRole: req.user.role,
+      allowedRoles,
+      isAllowed: allowedRoles.includes(req.user.role),
+    });
+
     if (!allowedRoles.includes(req.user.role)) {
+      console.log(`Authorization DENIED: User has role '${req.user.role}', required: ${allowedRoles.join(', ')}`);
       res.status(403).json({
         success: false,
         error: 'Forbidden',
@@ -146,6 +154,7 @@ export const authorize = (...allowedRoles: string[]) => {
       return
     }
 
+    console.log('Authorization SUCCESS');
     next()
   }
 }

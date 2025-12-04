@@ -32,6 +32,7 @@ model User {
   verifiedProfiles      StudentProfile[] @relation("ProfileVerifier")
   updatedProfiles       StudentProfile[] @relation("ProfileUpdater")
   studentProfile        StudentProfile?
+  notifications         Notification[]
 
   @@map("users")
   @@schema("auth")
@@ -576,5 +577,25 @@ model ApprovalRequest {
   @@index([request_type])
   @@index([resource_id])
   @@map("approval_requests")
+  @@schema("core")
+}
+
+model Notification {
+  id         String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id    String   @db.Uuid
+  type       String   @db.VarChar(50)
+  title      String   @db.VarChar(255)
+  message    String
+  data       String?  @db.Text
+  is_read    Boolean  @default(false)
+  read_at    DateTime?
+  created_at DateTime @default(now())
+  
+  user User @relation(fields: [user_id], references: [id], onDelete: Cascade)
+  
+  @@index([user_id])
+  @@index([is_read])
+  @@index([created_at])
+  @@map("notifications")
   @@schema("core")
 }

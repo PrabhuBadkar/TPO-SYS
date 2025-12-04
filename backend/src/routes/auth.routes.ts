@@ -516,9 +516,11 @@ router.post('/register/student', async (req: Request, res: Response): Promise<vo
 
 // =====================================================
 // POST /api/auth/register/recruiter
-// Description: Recruiter registration
+// Description: Recruiter registration (OLD - DISABLED)
+// NOTE: This endpoint is disabled. Use recruiter-auth.routes.ts instead
 // =====================================================
 
+/* DISABLED - Using detailed registration in recruiter-auth.routes.ts
 router.post('/register/recruiter', async (req: Request, res: Response): Promise<void> => {
   try {
     // Validate request body
@@ -586,6 +588,7 @@ router.post('/register/recruiter', async (req: Request, res: Response): Promise<
     })
   }
 })
+*/
 
 // =====================================================
 // POST /api/auth/logout
