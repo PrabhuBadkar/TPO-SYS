@@ -310,6 +310,8 @@ router.get('/recruiter/status', async (req: Request, res: Response): Promise<voi
   try {
     const { email } = req.query;
 
+    console.log('📊 Status check requested for email:', email);
+
     if (!email) {
       res.status(400).json({
         success: false,
@@ -323,6 +325,7 @@ router.get('/recruiter/status', async (req: Request, res: Response): Promise<voi
     });
 
     if (!user || user.role !== 'ROLE_RECRUITER') {
+      console.log('❌ User not found or not a recruiter');
       res.status(404).json({
         success: false,
         error: 'Recruiter not found',
@@ -330,12 +333,15 @@ router.get('/recruiter/status', async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    console.log('✅ User found:', user.id, 'Role:', user.role, 'Active:', user.is_active);
+
     const poc = await prisma.pOC.findUnique({
       where: { user_id: user.id },
       include: { organization: true },
     });
 
     if (!poc) {
+      console.log('❌ POC not found for user:', user.id);
       res.status(404).json({
         success: false,
         error: 'Organization details not found',
@@ -343,18 +349,28 @@ router.get('/recruiter/status', async (req: Request, res: Response): Promise<voi
       return;
     }
 
+    console.log('✅ POC found:', poc.id);
+    console.log('✅ Organization:', poc.organization.id, poc.organization.org_name);
+    console.log('✅ Recruiter Status:', poc.organization.recruiter_status);
+    console.log('✅ Verified At:', poc.organization.verified_at);
+    console.log('✅ Rejection Reason:', poc.organization.rejection_reason);
+
+    const responseData = {
+      status: poc.organization.recruiter_status,
+      organization_name: poc.organization.org_name,
+      rejection_reason: poc.organization.rejection_reason,
+      submitted_at: poc.organization.created_at,
+      verified_at: poc.organization.verified_at,
+    };
+
+    console.log('📤 Sending response:', JSON.stringify(responseData, null, 2));
+
     res.json({
       success: true,
-      data: {
-        status: poc.organization.recruiter_status,
-        organization_name: poc.organization.org_name,
-        rejection_reason: poc.organization.rejection_reason,
-        submitted_at: poc.organization.created_at,
-        verified_at: poc.organization.verified_at,
-      },
+      data: responseData,
     });
   } catch (error) {
-    console.error('Status check error:', error);
+    console.error('❌ Status check error:', error);
     res.status(500).json({
       success: false,
       error: 'Failed to check status',

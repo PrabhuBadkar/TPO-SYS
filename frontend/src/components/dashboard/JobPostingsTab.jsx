@@ -35,9 +35,9 @@ export default function JobPostingsTab() {
     try {
       const token = localStorage.getItem('accessToken');
       
-      console.log('Fetching job postings...');
+      console.log('Fetching all job postings...');
       
-      const response = await fetch('http://localhost:5000/api/internal/admin/jobs/pending', {
+      const response = await fetch('http://localhost:5000/api/internal/admin/jobs/all', {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
@@ -131,6 +131,15 @@ export default function JobPostingsTab() {
   };
 
   const handleApprove = async (jobId) => {
+    // Check if job is already approved
+    const job = jobPostings.find(j => j.id === jobId) || selectedJob;
+    if (job && job.status === 'ACTIVE') {
+      alert('This job posting is already approved and active!');
+      setShowModal(false);
+      setShowEligibilityModal(false);
+      return;
+    }
+
     if (!confirm('Are you sure you want to approve this job posting? Eligible students will be notified.')) {
       return;
     }
@@ -150,16 +159,22 @@ export default function JobPostingsTab() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        alert(`Job posting approved! ${data.data.eligible_students_count} eligible students will be notified.`);
+        alert(`✅ Job posting approved!\n\n${data.data.eligible_students_count} eligible students will be notified.\n\nNotifications created: ${data.data.notifications_created}`);
         setShowModal(false);
         setShowEligibilityModal(false);
         fetchAllData(); // Refresh data
       } else {
-        alert(data.error || 'Failed to approve job posting');
+        // Better error message
+        const errorMsg = data.message || data.error || 'Failed to approve job posting';
+        if (errorMsg.includes('not pending approval')) {
+          alert(`⚠️ Cannot approve this job posting.\n\n${errorMsg}\n\nThe job may have already been approved or rejected.`);
+        } else {
+          alert(`❌ Error: ${errorMsg}`);
+        }
       }
     } catch (error) {
       console.error('Approve error:', error);
-      alert('Failed to approve job posting');
+      alert('❌ Network error. Failed to approve job posting.');
     } finally {
       setActionLoading(false);
     }

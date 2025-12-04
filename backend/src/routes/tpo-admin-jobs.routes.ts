@@ -6,6 +6,49 @@ import { EligibilityEngineService } from '../services/eligibility-engine.service
 const router = Router();
 
 // =====================================================
+// GET /api/internal/admin/jobs/all
+// Description: Get all job postings
+// =====================================================
+
+router.get('/all', authenticate, authorize('ROLE_TPO_ADMIN'), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const jobPostings = await prisma.jobPosting.findMany({
+      where: {
+        deleted_at: null,
+      },
+      include: {
+        organization: {
+          select: {
+            org_name: true,
+            industry: true,
+          },
+        },
+        poc: {
+          select: {
+            poc_name: true,
+            email: true,
+          },
+        },
+      },
+      orderBy: {
+        created_at: 'desc',
+      },
+    });
+
+    res.json({
+      success: true,
+      data: jobPostings,
+    });
+  } catch (error) {
+    console.error('Get all jobs error:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to fetch job postings',
+    });
+  }
+});
+
+// =====================================================
 // GET /api/internal/admin/jobs/pending
 // Description: Get all pending job postings for approval
 // =====================================================
@@ -229,6 +272,8 @@ router.put('/:id/approve', authenticate, authorize('ROLE_TPO_ADMIN'), async (req
     const { id } = req.params;
     const adminId = req.user?.id;
 
+    console.log('🎯 Approving job posting:', id, 'by admin:', adminId);
+
     const jobPosting = await prisma.jobPosting.findUnique({
       where: { id },
       include: {
@@ -237,6 +282,7 @@ router.put('/:id/approve', authenticate, authorize('ROLE_TPO_ADMIN'), async (req
     });
 
     if (!jobPosting) {
+      console.log('❌ Job posting not found:', id);
       res.status(404).json({
         success: false,
         error: 'Job posting not found',
@@ -244,15 +290,20 @@ router.put('/:id/approve', authenticate, authorize('ROLE_TPO_ADMIN'), async (req
       return;
     }
 
+    console.log('✅ Job posting found:', jobPosting.job_title);
+    console.log('Current status:', jobPosting.status);
+
     if (jobPosting.status !== 'PENDING_APPROVAL') {
+      console.log('❌ Job posting is not pending approval, current status:', jobPosting.status);
       res.status(400).json({
         success: false,
-        error: 'Job posting is not pending approval',
+        error: `Job posting is not pending approval. Current status: ${jobPosting.status}`,
       });
       return;
     }
 
     // Update job posting status
+    console.log('📝 Updating job posting status to ACTIVE...');
     const updatedJob = await prisma.jobPosting.update({
       where: { id },
       data: {
@@ -262,21 +313,34 @@ router.put('/:id/approve', authenticate, authorize('ROLE_TPO_ADMIN'), async (req
       },
     });
 
-    console.log('Job posting approved:', id, 'by admin:', adminId);
+    console.log('✅ Job posting approved:', id, 'by admin:', adminId);
 
     // Run eligibility engine and send notifications
+    console.log('🔍 Running eligibility engine...');
     const criteria = jobPosting.eligibility_criteria as any;
-    const eligibilityResult = await EligibilityEngineService.processJobApproval(
-      id,
-      jobPosting.job_title,
-      jobPosting.organization.org_name,
-      criteria
-    );
+    
+    let eligibilityResult;
+    try {
+      eligibilityResult = await EligibilityEngineService.processJobApproval(
+        id,
+        jobPosting.job_title,
+        jobPosting.organization.org_name,
+        criteria
+      );
 
-    console.log('Eligibility workflow completed:');
-    console.log(`  - Eligible students: ${eligibilityResult.total_eligible}`);
-    console.log(`  - Notifications created: ${eligibilityResult.notifications_created}`);
-    console.log(`  - Emails sent: ${eligibilityResult.emails_sent}`);
+      console.log('✅ Eligibility workflow completed:');
+      console.log(`  - Eligible students: ${eligibilityResult.total_eligible}`);
+      console.log(`  - Notifications created: ${eligibilityResult.notifications_created}`);
+      console.log(`  - Emails sent: ${eligibilityResult.emails_sent}`);
+    } catch (eligibilityError) {
+      console.error('⚠️  Eligibility engine error (non-fatal):', eligibilityError);
+      // Continue even if eligibility engine fails
+      eligibilityResult = {
+        total_eligible: 0,
+        notifications_created: 0,
+        emails_sent: 0,
+      };
+    }
 
     // TODO: Send notification to recruiter (job approved)
     // TODO: Create audit log entry
@@ -293,10 +357,13 @@ router.put('/:id/approve', authenticate, authorize('ROLE_TPO_ADMIN'), async (req
       },
     });
   } catch (error) {
-    console.error('Job approval error:', error);
+    console.error('❌ Job approval error:', error);
+    console.error('Error details:', error instanceof Error ? error.message : 'Unknown error');
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack trace');
     res.status(500).json({
       success: false,
       error: 'Failed to approve job posting',
+      message: error instanceof Error ? error.message : 'Unknown error',
     });
   }
 });

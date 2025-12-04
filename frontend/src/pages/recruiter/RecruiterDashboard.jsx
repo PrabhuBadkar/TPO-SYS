@@ -25,14 +25,22 @@ export default function RecruiterDashboard() {
       return;
     }
 
-    // Load user data
-    const userData = JSON.parse(localStorage.getItem('user') || '{}');
-    const orgData = JSON.parse(localStorage.getItem('organization') || '{}');
-    const pocData = JSON.parse(localStorage.getItem('poc') || '{}');
-    
-    setUser(userData);
-    setOrganization(orgData);
-    setPoc(pocData);
+    // Load user data from localStorage
+    try {
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      const orgData = JSON.parse(localStorage.getItem('organization') || '{}');
+      const pocData = JSON.parse(localStorage.getItem('poc') || '{}');
+      
+      console.log('Loaded user data:', userData);
+      console.log('Loaded organization data:', orgData);
+      console.log('Loaded POC data:', pocData);
+      
+      setUser(userData);
+      setOrganization(orgData);
+      setPoc(pocData);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+    }
   }, [navigate]);
 
   const handleLogout = () => {
@@ -152,7 +160,7 @@ export default function RecruiterDashboard() {
               </svg>
             </div>
             <div className="brand-text">
-              <h1>{organization?.name || 'Recruiter'}</h1>
+              <h1>{organization?.name || organization?.org_name || 'Recruiter'}</h1>
               <p>{organization?.status === 'VERIFIED' ? 'Verified Partner' : 'Partner'}</p>
             </div>
           </div>
@@ -195,10 +203,10 @@ export default function RecruiterDashboard() {
               onClick={() => setShowUserMenu(!showUserMenu)}
             >
               <div className="avatar-circle">
-                {getInitials(poc?.name)}
+                {getInitials(poc?.name || poc?.poc_name || user?.email)}
               </div>
               <div className="user-info">
-                <span className="user-name">{poc?.name || 'User'}</span>
+                <span className="user-name">{poc?.name || poc?.poc_name || 'User'}</span>
                 <span className="user-role">{poc?.designation || 'Recruiter'}</span>
               </div>
               <svg 
@@ -215,8 +223,8 @@ export default function RecruiterDashboard() {
             {showUserMenu && (
               <div className="user-dropdown">
                 <div className="dropdown-header">
-                  <p className="dropdown-name">{poc?.name}</p>
-                  <p className="dropdown-email">{user?.email}</p>
+                  <p className="dropdown-name">{poc?.name || poc?.poc_name || 'User'}</p>
+                  <p className="dropdown-email">{user?.email || 'No email'}</p>
                 </div>
                 <div className="dropdown-divider"></div>
                 <button className="dropdown-item" onClick={() => setActiveTab('profile')}>
@@ -349,7 +357,7 @@ export default function RecruiterDashboard() {
                   <div className="profile-grid">
                     <div className="profile-item">
                       <span className="profile-label">Company Name:</span>
-                      <span className="profile-value">{organization?.name || 'N/A'}</span>
+                      <span className="profile-value">{organization?.name || organization?.org_name || 'N/A'}</span>
                     </div>
                     <div className="profile-item">
                       <span className="profile-label">Status:</span>
@@ -364,7 +372,7 @@ export default function RecruiterDashboard() {
                   <div className="profile-grid">
                     <div className="profile-item">
                       <span className="profile-label">Name:</span>
-                      <span className="profile-value">{poc?.name || 'N/A'}</span>
+                      <span className="profile-value">{poc?.name || poc?.poc_name || 'N/A'}</span>
                     </div>
                     <div className="profile-item">
                       <span className="profile-label">Designation:</span>
@@ -372,7 +380,7 @@ export default function RecruiterDashboard() {
                     </div>
                     <div className="profile-item">
                       <span className="profile-label">Email:</span>
-                      <span className="profile-value">{user?.email || 'N/A'}</span>
+                      <span className="profile-value">{user?.email || poc?.email || 'N/A'}</span>
                     </div>
                     <div className="profile-item">
                       <span className="profile-label">Department:</span>
